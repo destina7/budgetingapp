@@ -3,7 +3,7 @@
 import { useAppState } from "@/lib/useAppState";
 import { allocationRulesSum, formatEUR, uid } from "@/lib/calc";
 import { Card, SectionTitle, Field, inputClass, Button } from "@/components/ui";
-import { FixedCost, AllocationRule } from "@/lib/types";
+import { BudgetCategory, AllocationRule } from "@/lib/types";
 
 const RULE_COLORS = ["#4f8a6f", "#c98a3b", "#5b7fb5", "#c25b4f", "#9b6bc9", "#4fa3a3"];
 
@@ -21,11 +21,11 @@ export default function SettingsPage() {
   }
 
   function addFixedCost() {
-    const newCost: FixedCost = { id: uid("fc"), name: "New cost", amount: 0 };
+    const newCost: BudgetCategory = { id: uid("fc"), name: "New cost", amount: 0 };
     setSettings({ fixedCosts: [...current.settings.fixedCosts, newCost] });
   }
 
-  function updateFixedCost(id: string, patch: Partial<FixedCost>) {
+  function updateFixedCost(id: string, patch: Partial<BudgetCategory>) {
     setSettings({
       fixedCosts: current.settings.fixedCosts.map((c) => (c.id === id ? { ...c, ...patch } : c)),
     });
@@ -33,6 +33,25 @@ export default function SettingsPage() {
 
   function removeFixedCost(id: string) {
     setSettings({ fixedCosts: current.settings.fixedCosts.filter((c) => c.id !== id) });
+  }
+
+  function addVariableCategory() {
+    const newCat: BudgetCategory = { id: uid("vc"), name: "New category", amount: 0 };
+    setSettings({ variableCategories: [...current.settings.variableCategories, newCat] });
+  }
+
+  function updateVariableCategory(id: string, patch: Partial<BudgetCategory>) {
+    setSettings({
+      variableCategories: current.settings.variableCategories.map((c) =>
+        c.id === id ? { ...c, ...patch } : c
+      ),
+    });
+  }
+
+  function removeVariableCategory(id: string) {
+    setSettings({
+      variableCategories: current.settings.variableCategories.filter((c) => c.id !== id),
+    });
   }
 
   function addRule() {
@@ -102,30 +121,15 @@ export default function SettingsPage() {
         <SectionTitle hint="Recurring costs, auto-subtracted from your minimum income">
           Fixed costs
         </SectionTitle>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {state.settings.fixedCosts.map((cost) => (
-            <div key={cost.id} className="flex items-center gap-2">
-              <input
-                type="text"
-                className={`${inputClass} flex-1`}
-                value={cost.name}
-                onChange={(e) => updateFixedCost(cost.id, { name: e.target.value })}
-              />
-              <input
-                type="number"
-                inputMode="decimal"
-                className={`${inputClass} w-24`}
-                value={cost.amount}
-                onChange={(e) => updateFixedCost(cost.id, { amount: Number(e.target.value) })}
-              />
-              <button
-                onClick={() => removeFixedCost(cost.id)}
-                className="px-2 text-muted hover:text-accent-red"
-                aria-label="Remove"
-              >
-                ✕
-              </button>
-            </div>
+            <CategoryRow
+              key={cost.id}
+              item={cost}
+              onChangeName={(name) => updateFixedCost(cost.id, { name })}
+              onChangeAmount={(amount) => updateFixedCost(cost.id, { amount })}
+              onRemove={() => removeFixedCost(cost.id)}
+            />
           ))}
         </div>
         <Button variant="secondary" onClick={addFixedCost} className="mt-3 w-full">
@@ -137,6 +141,36 @@ export default function SettingsPage() {
             {formatEUR(state.settings.fixedCosts.reduce((s, c) => s + c.amount, 0))}
           </span>
         </div>
+      </Card>
+
+      <Card>
+        <SectionTitle hint="Your normal monthly budget per category — food, clothes, whatever you split spending into. Also subtracted from your minimum income.">
+          Variable budgets
+        </SectionTitle>
+        <div className="space-y-3">
+          {state.settings.variableCategories.map((cat) => (
+            <CategoryRow
+              key={cat.id}
+              item={cat}
+              onChangeName={(name) => updateVariableCategory(cat.id, { name })}
+              onChangeAmount={(amount) => updateVariableCategory(cat.id, { amount })}
+              onRemove={() => removeVariableCategory(cat.id)}
+            />
+          ))}
+        </div>
+        <Button variant="secondary" onClick={addVariableCategory} className="mt-3 w-full">
+          + Add variable budget
+        </Button>
+        <div className="mt-3 flex justify-between text-sm text-muted">
+          <span>Total</span>
+          <span className="font-medium text-foreground">
+            {formatEUR(state.settings.variableCategories.reduce((s, c) => s + c.amount, 0))}
+          </span>
+        </div>
+        <p className="mt-3 text-xs text-muted">
+          In a month you earn more, these stay the same — the extra goes through the calculator on
+          the Today page instead, so you&apos;re not resetting budgets every month.
+        </p>
       </Card>
 
       <Card>
@@ -219,6 +253,51 @@ export default function SettingsPage() {
           </Field>
         </div>
       </Card>
+    </div>
+  );
+}
+
+function CategoryRow({
+  item,
+  onChangeName,
+  onChangeAmount,
+  onRemove,
+}: {
+  item: BudgetCategory;
+  onChangeName: (name: string) => void;
+  onChangeAmount: (amount: number) => void;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-background/60 p-3">
+      <Field label="Name">
+        <input
+          type="text"
+          className={inputClass}
+          value={item.name}
+          onChange={(e) => onChangeName(e.target.value)}
+        />
+      </Field>
+      <div className="mt-2.5 flex items-end gap-2">
+        <div className="flex-1">
+          <Field label="Amount (€)">
+            <input
+              type="number"
+              inputMode="decimal"
+              className={inputClass}
+              value={item.amount}
+              onChange={(e) => onChangeAmount(Number(e.target.value))}
+            />
+          </Field>
+        </div>
+        <button
+          onClick={onRemove}
+          className="mb-0.5 shrink-0 rounded-lg border border-border px-3 py-2 text-muted hover:border-accent-red hover:text-accent-red"
+          aria-label="Remove"
+        >
+          ✕
+        </button>
+      </div>
     </div>
   );
 }

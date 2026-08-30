@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppState, DEFAULT_STATE } from "./types";
+import { AppState, DEFAULT_STATE, normalizeState } from "./types";
 
 export function useAppState() {
   const [state, setState] = useState<AppState | null>(null);
@@ -16,7 +16,7 @@ export function useAppState() {
         if (!res.ok) throw new Error("Failed to load data");
         return res.json();
       })
-      .then((data: AppState) => setState(data))
+      .then((data: AppState) => setState(normalizeState(data)))
       .catch((err) => {
         setError(err.message);
         setState(DEFAULT_STATE);

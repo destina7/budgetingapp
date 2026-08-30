@@ -4,8 +4,15 @@ export function fixedCostsTotal(state: AppState): number {
   return state.settings.fixedCosts.reduce((sum, c) => sum + c.amount, 0);
 }
 
+export function variableCategoriesTotal(state: AppState): number {
+  return state.settings.variableCategories.reduce((sum, c) => sum + c.amount, 0);
+}
+
+// What's left of your guaranteed minimum income after fixed costs AND your
+// planned variable-category budgets (food, clothes, etc). This is the true
+// "free" amount each month if you stick to your budgets.
 export function guaranteedLeftover(state: AppState): number {
-  return state.settings.minIncome - fixedCostsTotal(state);
+  return state.settings.minIncome - fixedCostsTotal(state) - variableCategoriesTotal(state);
 }
 
 export function duoRemaining(state: AppState): number {

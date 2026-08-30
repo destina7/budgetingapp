@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { AppState, DEFAULT_STATE } from "./types";
+import { AppState, DEFAULT_STATE, normalizeState } from "./types";
 
 // Vercel's Neon/Postgres integration injects DATABASE_URL (or POSTGRES_URL)
 // automatically once you attach a database to the project in the Vercel
@@ -38,7 +38,7 @@ export async function getState(): Promise<AppState> {
     await sql`INSERT INTO app_state (id, data) VALUES (1, ${JSON.stringify(DEFAULT_STATE)}::jsonb)`;
     return DEFAULT_STATE;
   }
-  return rows[0].data as AppState;
+  return normalizeState(rows[0].data);
 }
 
 export async function saveState(state: AppState): Promise<void> {

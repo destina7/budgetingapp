@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useAppState } from "@/lib/useAppState";
 import {
   fixedCostsTotal,
+  variableCategoriesTotal,
   guaranteedLeftover,
   duoRemaining,
   bufferProgressPct,
@@ -31,6 +32,7 @@ export default function DashboardPage() {
   if (!state) return <CenteredNote>Something went wrong loading your data.</CenteredNote>;
 
   const fixed = fixedCostsTotal(state);
+  const variable = variableCategoriesTotal(state);
   const leftover = guaranteedLeftover(state);
   const duo = duoRemaining(state);
   const bufferPct = bufferProgressPct(state);
@@ -75,6 +77,7 @@ export default function DashboardPage() {
         <div className="space-y-2 text-sm">
           <Row label="Minimum income" value={formatEUR(state.settings.minIncome)} />
           <Row label="Fixed costs" value={`− ${formatEUR(fixed)}`} muted />
+          <Row label="Variable budgets" value={`− ${formatEUR(variable)}`} muted />
           <div className="my-2 border-t border-border" />
           <Row
             label="Breathing room"
@@ -83,6 +86,10 @@ export default function DashboardPage() {
             valueColor={leftover >= 0 ? "var(--accent-green)" : "var(--accent-red)"}
           />
         </div>
+        <p className="mt-3 text-xs text-muted">
+          This is your floor — it holds even in a lean month. Extra income on top of your minimum
+          is handled separately below.
+        </p>
       </Card>
 
       <Card>
@@ -100,6 +107,27 @@ export default function DashboardPage() {
             ))}
           <div className="my-2 border-t border-border" />
           <Row label="Total" value={formatEUR(fixed)} strong />
+        </div>
+        <a href="/settings" className="mt-3 block text-center text-xs text-muted underline">
+          Edit in Settings
+        </a>
+      </Card>
+
+      <Card>
+        <SectionTitle hint="Your planned monthly spending money, by category">
+          Variable budgets
+        </SectionTitle>
+        <div className="space-y-2 text-sm">
+          {[...state.settings.variableCategories]
+            .sort((a, b) => b.amount - a.amount)
+            .map((cat) => (
+              <div key={cat.id} className="flex items-center justify-between">
+                <span className="text-muted">{cat.name}</span>
+                <span className="font-medium">{formatEUR(cat.amount)}</span>
+              </div>
+            ))}
+          <div className="my-2 border-t border-border" />
+          <Row label="Total" value={formatEUR(variable)} strong />
         </div>
         <a href="/settings" className="mt-3 block text-center text-xs text-muted underline">
           Edit in Settings
@@ -128,10 +156,10 @@ export default function DashboardPage() {
       </Card>
 
       <Card>
-        <SectionTitle hint="Got paid extra this month? See how it splits.">
+        <SectionTitle hint="This is how a higher-income month works: your budgets above stay the same, and whatever you earn beyond your minimum gets split here.">
           Extra income calculator
         </SectionTitle>
-        <Field label="Extra amount received">
+        <Field label="Extra amount received (above your minimum income)">
           <input
             type="number"
             inputMode="decimal"
