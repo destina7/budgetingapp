@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const ITEMS = [
   { href: "/", label: "Today", icon: HomeIcon },
   { href: "/scenarios", label: "What-if", icon: TrendIcon },
+  { href: "/invest", label: "Invest", icon: CoinIcon },
   { href: "/duo", label: "DUO", icon: WalletIcon },
   { href: "/settings", label: "Settings", icon: GearIcon },
 ];
@@ -51,6 +52,17 @@ function TrendIcon({ active }: { active: boolean }) {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 17 10 11l4 4 6-7" />
       <path d="M15 8h5v5" />
+    </svg>
+  );
+}
+
+function CoinIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="5" />
+      <path d="M7 12.5V16a5 3 0 0 0 10 0v-3.5" />
+      <path d="M9.5 8h1a1.2 1.2 0 0 1 0 2.4h-1a1.2 1.2 0 0 0 0 2.4h1" />
+      <path d="M10.5 6v1M10.5 12.4v1" />
     </svg>
   );
 }

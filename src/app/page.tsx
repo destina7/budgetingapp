@@ -86,6 +86,27 @@ export default function DashboardPage() {
       </Card>
 
       <Card>
+        <SectionTitle hint="What that fixed-costs total is made up of">
+          Fixed costs breakdown
+        </SectionTitle>
+        <div className="space-y-2 text-sm">
+          {[...state.settings.fixedCosts]
+            .sort((a, b) => b.amount - a.amount)
+            .map((cost) => (
+              <div key={cost.id} className="flex items-center justify-between">
+                <span className="text-muted">{cost.name}</span>
+                <span className="font-medium">{formatEUR(cost.amount)}</span>
+              </div>
+            ))}
+          <div className="my-2 border-t border-border" />
+          <Row label="Total" value={formatEUR(fixed)} strong />
+        </div>
+        <a href="/settings" className="mt-3 block text-center text-xs text-muted underline">
+          Edit in Settings
+        </a>
+      </Card>
+
+      <Card>
         <SectionTitle hint={`Target: ${formatEUR(state.settings.bufferTarget)}`}>
           Buffer
         </SectionTitle>

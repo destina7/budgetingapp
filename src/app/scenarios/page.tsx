@@ -11,8 +11,14 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useAppState } from "@/lib/useAppState";
-import { projectScenario, duoRemaining, formatEUR } from "@/lib/calc";
-import { Card, SectionTitle } from "@/components/ui";
+import {
+  projectScenario,
+  duoRemaining,
+  formatEUR,
+  monthsToBufferTarget,
+  futureValueOfMonthlyContributions,
+} from "@/lib/calc";
+import { Card, SectionTitle, Field, inputClass } from "@/components/ui";
 
 export default function ScenariosPage() {
   const { state, loading } = useAppState();
@@ -20,6 +26,7 @@ export default function ScenariosPage() {
   const [saveInvestPct, setSaveInvestPct] = useState(50);
   const [duoExtraPct, setDuoExtraPct] = useState(20);
   const [months, setMonths] = useState(24);
+  const [investReturnPct, setInvestReturnPct] = useState(6);
 
   const projection = useMemo(() => {
     if (!state) return [];
@@ -36,6 +43,13 @@ export default function ScenariosPage() {
   const spendPct = Math.max(0, 100 - saveInvestPct - duoExtraPct);
   const final = projection[projection.length - 1];
   const currentDuo = duoRemaining(state);
+
+  const monthlyToBuffer = (extraMonthly * saveInvestPct) / 100;
+  const bufferMonths = monthsToBufferTarget(state, monthlyToBuffer);
+
+  const monthlyToDuo = (extraMonthly * duoExtraPct) / 100;
+  const duoPaidNominal = Math.round(monthlyToDuo * months);
+  const investedInstead = futureValueOfMonthlyContributions(monthlyToDuo, months, investReturnPct);
 
   return (
     <div className="flex flex-col gap-5">
@@ -156,6 +170,56 @@ export default function ScenariosPage() {
           </p>
         </Card>
       )}
+
+      <Card>
+        <SectionTitle hint="Based on your buffer split above">When will I hit my buffer target?</SectionTitle>
+        {bufferMonths === null ? (
+          <p className="text-sm text-muted">
+            At 0% going to buffer, it&apos;ll never grow on its own — bump the &quot;Save &amp;
+            invest&quot; slider above.
+          </p>
+        ) : bufferMonths === 0 ? (
+          <p className="text-sm text-accent-green">You&apos;re already at your buffer target.</p>
+        ) : (
+          <p className="text-sm">
+            About <span className="font-semibold">{bufferMonths} months</span> from now, putting{" "}
+            {formatEUR(monthlyToBuffer)}/month toward it.
+          </p>
+        )}
+      </Card>
+
+      <Card>
+        <SectionTitle hint="Since DUO's interest rate is low, is paying it faster actually the best move?">
+          Invest it instead of extra DUO payments?
+        </SectionTitle>
+        <Field label="Assumed investment return (% / yr)">
+          <input
+            type="number"
+            inputMode="decimal"
+            step="0.5"
+            className={inputClass}
+            value={investReturnPct}
+            onChange={(e) => setInvestReturnPct(Number(e.target.value) || 0)}
+          />
+        </Field>
+        <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+          <div>
+            <p className="text-xs text-muted">Extra DUO payments</p>
+            <p className="mt-1 text-lg font-semibold text-accent-amber">{formatEUR(duoPaidNominal)}</p>
+            <p className="mt-0.5 text-xs text-muted">debt reduced, {state.settings.duo.interestRatePct}%/yr avoided</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted">Same money invested</p>
+            <p className="mt-1 text-lg font-semibold text-accent-green">{formatEUR(investedInstead)}</p>
+            <p className="mt-0.5 text-xs text-muted">at {investReturnPct}%/yr over {months} months</p>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-muted">
+          Based on {formatEUR(monthlyToDuo)}/month (the &quot;DUO extra payment&quot; slice above) over{" "}
+          {months} months. This is a simple comparison, not financial advice — investment returns
+          aren&apos;t guaranteed the way debt reduction is.
+        </p>
+      </Card>
     </div>
   );
 }
